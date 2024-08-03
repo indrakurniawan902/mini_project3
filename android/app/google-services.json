@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "179093139757",
+    "project_id": "indie-commerce-75ccd",
+    "storage_bucket": "indie-commerce-75ccd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:179093139757:android:6f49efc480a19a3547a3a4",
+        "android_client_info": {
+          "package_name": "com.example.indie_commerce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMf5pnx1FS9IFuQhUSCXAwcOD8kGmLFgQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
