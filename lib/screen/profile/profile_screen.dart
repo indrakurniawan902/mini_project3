@@ -12,7 +12,8 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
-    context.read<ProfileCubit>().getUserById();
+    final email = FirebaseAuth.instance.currentUser!.email;
+    context.read<ProfileCubit>().getUserByEmail(email!);
     super.initState();
   }
 
@@ -35,14 +36,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         IconsButton(
           onPressed: () async {
-            // Tambahkan logika untuk melakukan logout di sini
-            // Misalnya, panggil fungsi untuk menghapus sesi login, dll.
-            // Kemudian tutup dialog
-            // Remove data for the 'token' key.
-            final SharedPreferences prefs =
-                await SharedPreferences.getInstance();
-            await prefs.remove('token');
-            Hive.box('favorites').clear();
+            final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+            firebaseAuth.signOut();
             context.goNamed(AppRoutes.nrLogin);
           },
           text: 'Log Out',
@@ -130,7 +125,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'My purchase',
                             style: TextStyle(fontSize: 17),
                           ),
-                          onTap: _showMaintenanceDialog,
+                          onTap: () {
+                            context.pushNamed(AppRoutes.nrStatusPayment);
+                          },
                         ),
                         ListTile(
                           leading: const CircleAvatar(

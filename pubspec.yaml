@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  build_runner: ^2.4.6
   carousel_slider: ^4.2.1
   cloud_firestore: ^5.1.0
   cupertino_icons: ^1.0.6
@@ -43,9 +44,15 @@ dependencies:
   flutter_local_notifications: ^17.2.1+2
   flutter_svg: ^2.0.10+1
   go_router: ^14.2.0
-  hive_flutter: ^1.1.0
+  intl: ^0.19.0
+  json_annotation: ^4.8.1
+  json_serializable: ^6.7.1
   jwt_decoder: ^2.0.1
   material_dialogs: ^1.1.4
+  open_file: ^3.3.2
+  path_provider: ^2.1.4
+  pdf: ^3.11.1
+  qr_flutter: ^4.1.0
   shared_preferences: ^2.2.3
 
 dev_dependencies:

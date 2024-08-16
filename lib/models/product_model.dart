@@ -1,11 +1,8 @@
-import 'dart:convert';
+import 'package:json_annotation/json_annotation.dart';
 
-List<ProductModel> productModelFromJson(String str) => List<ProductModel>.from(
-    json.decode(str).map((x) => ProductModel.fromJson(x)));
+part 'product_model.g.dart';
 
-String productModelToJson(List<ProductModel> data) =>
-    json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
-
+@JsonSerializable()
 class ProductModel {
   final int? id;
   final String? title;
@@ -13,6 +10,7 @@ class ProductModel {
   final String? description;
   final String? category;
   final String? image;
+  final int? quantity;
   final Rating? rating;
 
   ProductModel({
@@ -22,49 +20,16 @@ class ProductModel {
     this.description,
     this.category,
     this.image,
+    this.quantity,
     this.rating,
   });
 
-  ProductModel copyWith({
-    int? id,
-    String? title,
-    double? price,
-    String? description,
-    String? category,
-    String? image,
-    Rating? rating,
-  }) =>
-      ProductModel(
-        id: id ?? this.id,
-        title: title ?? this.title,
-        price: price ?? this.price,
-        description: description ?? this.description,
-        category: category ?? this.category,
-        image: image ?? this.image,
-        rating: rating ?? this.rating,
-      );
+  factory ProductModel.fromJson(Map<String, dynamic> json) => _$ProductModelFromJson(json);
 
-  factory ProductModel.fromJson(Map<String, dynamic> json) => ProductModel(
-        id: json["id"],
-        title: json["title"],
-        price: json["price"]?.toDouble(),
-        description: json["description"],
-        category: json["category"],
-        image: json["image"],
-        rating: json["rating"] == null ? null : Rating.fromJson(json["rating"]),
-      );
-
-  Map<String, dynamic> toJson() => {
-        "id": id,
-        "title": title,
-        "price": price,
-        "description": description,
-        "category": category,
-        "image": image,
-        "rating": rating?.toJson(),
-      };
+  Map<String, dynamic> toJson() => _$ProductModelToJson(this);
 }
 
+@JsonSerializable(explicitToJson: true)
 class Rating {
   final double? rate;
   final int? count;
@@ -74,22 +39,8 @@ class Rating {
     this.count,
   });
 
-  Rating copyWith({
-    double? rate,
-    int? count,
-  }) =>
-      Rating(
-        rate: rate ?? this.rate,
-        count: count ?? this.count,
-      );
 
-  factory Rating.fromJson(Map<String, dynamic> json) => Rating(
-        rate: json["rate"]?.toDouble(),
-        count: json["count"],
-      );
+  factory Rating.fromJson(Map<String, dynamic> json) => _$RatingFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-        "rate": rate,
-        "count": count,
-      };
+  Map<String, dynamic> toJson() => _$RatingToJson(this);
 }

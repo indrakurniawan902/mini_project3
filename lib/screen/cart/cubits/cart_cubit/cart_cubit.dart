@@ -8,10 +8,10 @@ part 'cart_state.dart';
 class CartCubit extends Cubit<CartState> {
   CartCubit() : super(CartInitial());
 
-  Future<void> getCartItems() async {
+  Future<void> getCartItems(String uid) async {
     emit(CartLoading());
     try {
-      final cartItems = await CartService.instance.getCartItemsByUserId();
+      final cartItems = await CartService.instance.getCartItemsByUserId(uid);
       emit(CartLoaded(cartItems));
     } catch (e) {
       emit(CartError(e.toString()));

@@ -48,4 +48,23 @@ class ProductService {
       throw Exception(e.toString());
     }
   }
+
+  Future<List<ProductModel>> getFavorites(String uid) async {
+    final userFav = await firebaseFirestore.collection("users").doc(uid).get();
+    List productId = userFav.data()?["favorites"] ?? [];
+    List<ProductModel> data = [];
+    try {
+      for (int id in productId) {
+        final response = await firebaseFirestore
+            .collection("products")
+            .where("id", isEqualTo: id)
+            .get();
+        data =
+            response.docs.map((e) => ProductModel.fromJson(e.data())).toList();
+      }
+      return data;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

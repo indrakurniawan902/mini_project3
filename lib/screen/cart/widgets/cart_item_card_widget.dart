@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:indie_commerce/models/product_model.dart';
+import 'package:indie_commerce/models/cart_model.dart';
 import 'package:indie_commerce/navigation/app_routes.dart';
+import 'package:indie_commerce/screen/favorite/add_item_cubit/add_item_cubit.dart';
 
 class CartItemCardWidget extends StatelessWidget {
-  const CartItemCardWidget({
+  const   CartItemCardWidget({
     super.key,
     required this.product,
-    required this.quantity,
+    required this.uid
   });
-  final ProductModel product;
-  final int quantity;
+  final CartModel product;
+  final String uid;
 
   @override
   Widget build(BuildContext context) {
@@ -88,15 +90,19 @@ class CartItemCardWidget extends StatelessWidget {
                 child: Row(
                   children: [
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        context.read<AddItemCubit>().removeCart(uid,product);
+                      },
                       icon: const Icon(Icons.remove),
                     ),
                     Text(
-                      quantity.toString(),
+                      product.quantity.toString(),
                       style: const TextStyle(fontSize: 20, color: Colors.red),
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                          context.read<AddItemCubit>().addToCart(uid,product);
+                      },
                       icon: const Icon(Icons.add),
                     ),
                   ],

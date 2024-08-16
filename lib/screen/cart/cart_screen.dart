@@ -1,11 +1,13 @@
-import 'dart:developer';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:indie_commerce/models/product_model.dart';
+import 'package:go_router/go_router.dart';
+import 'package:indie_commerce/models/cart_model.dart';
+import 'package:indie_commerce/models/payment_model.dart';
+import 'package:indie_commerce/navigation/app_routes.dart';
 import 'package:indie_commerce/screen/cart/cubits/cart_cubit/cart_cubit.dart';
-import 'package:indie_commerce/screen/cart/cubits/price_total_cubit/price_total_cubit.dart';
 import 'package:indie_commerce/screen/cart/widgets/cart_item_card_widget.dart';
-import 'package:indie_commerce/screen/home/cubit/product_cubit.dart';
+import 'package:indie_commerce/screen/favorite/add_item_cubit/add_item_cubit.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -15,19 +17,17 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  final uid = FirebaseAuth.instance.currentUser!.uid;
   @override
   void initState() {
-    context.read<CartCubit>().getCartItems();
-    context.read<PriceTotalCubit>().countPriceTotal();
+    context.read<CartCubit>().getCartItems(uid);
     super.initState();
   }
 
-  // double totalPrice = 0.0;
-
-  // ValueNotifier<double> priceTotal = ValueNotifier(0.0);
-
   @override
   Widget build(BuildContext context) {
+    double totalPrice = 0.0;
+    List<CartModel> listCart = [];
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -38,47 +38,44 @@ class _CartScreenState extends State<CartScreen> {
               color: Colors.black, fontWeight: FontWeight.w500, fontSize: 20),
         ),
       ),
-      body: BlocBuilder<ProductCubit, ProductState>(
-        builder: (productContext, productState) {
-          productState as ProductSuccess;
-          final products = productState.allProducts;
-          return BlocBuilder<CartCubit, CartState>(
-            builder: (cartContext, cartState) {
-              if (cartState is CartLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              } else if (cartState is CartLoaded) {
-                final cartItems = cartState.cartItems;
-                List<ProductModel> cartProducts = [];
-                for (var product in products) {
-                  for (var cartItem in cartItems) {
-                    if (product.id == cartItem.productId) {
-                      cartProducts.add(product);
-                    }
-                  }
-                }
-                log(cartProducts.toString());
-                return Padding(
-                  padding: const EdgeInsets.only(top: 36, left: 16, right: 16),
-                  child: ListView.builder(
-                    itemCount: cartProducts.length,
-                    itemBuilder: (context, index) {
-                      final cartItem = cartItems[index];
-                      final item = cartProducts[index];
-                      return CartItemCardWidget(
-                          product: item, quantity: cartItem.quantity!);
-                    },
-                  ),
-                );
-              } else {
-                return const Center(
-                  child: Text("Terjadi Kesalahan"),
-                );
-              }
-            },
-          );
+      body: BlocListener<AddItemCubit, AddItemState>(
+        listener: (context, state) {
+          if (state is AddItemCartSuccess) {
+            context.read<CartCubit>().getCartItems(uid);
+          }
         },
+        child: BlocBuilder<CartCubit, CartState>(
+          builder: (productContext, productState) {
+            return BlocBuilder<CartCubit, CartState>(
+              builder: (context, state) {
+                if (state is CartLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else if (state is CartLoaded) {
+                  listCart = state.cartItems;
+                  return Padding(
+                    padding:
+                        const EdgeInsets.only(top: 36, left: 16, right: 16),
+                    child: ListView.builder(
+                      itemCount: state.cartItems.length,
+                      itemBuilder: (context, index) {
+                        return CartItemCardWidget(
+                          product: state.cartItems[index],
+                          uid: uid,
+                        );
+                      },
+                    ),
+                  );
+                } else {
+                  return const Center(
+                    child: Text("Terjadi Kesalahan"),
+                  );
+                }
+              },
+            );
+          },
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Container(
@@ -94,97 +91,126 @@ class _CartScreenState extends State<CartScreen> {
               topRight: Radius.circular(40),
             ),
           ),
-          child: BlocBuilder<PriceTotalCubit, PriceTotalState>(
-            builder: (context, state) {
-              state as CountPriceTotal;
-              double priceTotal = state.priceTotal;
-              return Column(
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Total",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        "\$$priceTotal",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Shipping Fee",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        "\$10.00",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(
-                    height: 36,
-                    thickness: 2,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Subtotal",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 20,
-                        ),
-                      ),
-                      Text(
-                        "\$${priceTotal + 10}",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.only(
-                        top: 12, bottom: 12, left: 32, right: 32),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(40),
-                      color: const Color(0xff1E1F2E),
+                  const Text(
+                    "Total",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
                     ),
-                    child: const Text(
-                      'Checkout',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold),
+                  ),
+                  BlocBuilder<CartCubit, CartState>(
+                    builder: (context, state) {
+                      double priceTotal = 0.0;
+                      if (state is CartLoaded) {
+                        for (var i = 0; i < state.cartItems.length; i++) {
+                          priceTotal += (state.cartItems[i].price! *
+                              state.cartItems[i].quantity!);
+                        }
+                        totalPrice = priceTotal;
+                        return Text(
+                          "\$${totalPrice.toStringAsFixed(2)}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Colors.red,
+                          ),
+                        );
+                      } else {
+                        return const SizedBox.shrink();
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Shipping Fee",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    "\$0.00",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.red,
                     ),
                   ),
                 ],
-              );
-            },
+              ),
+              const Divider(
+                height: 36,
+                thickness: 2,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Subtotal",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                    ),
+                  ),
+                  BlocBuilder<CartCubit, CartState>(
+                    builder: (context, state) {
+                      double sum = 0.0;
+                      if (state is CartLoaded) {
+                        for (var i = 0; i < state.cartItems.length; i++) {
+                          sum += (state.cartItems[i].price! *
+                              state.cartItems[i].quantity!);
+                        }
+                        return Text(
+                          "\$${sum.toStringAsFixed(2)}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Colors.red,
+                          ),
+                        );
+                      } else {
+                        return const SizedBox.shrink();
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () {
+                  PaymentModel data = PaymentModel(
+                      cartItems: listCart,
+                      totalPrice: totalPrice.toStringAsFixed(2));
+                  context.pushNamed(AppRoutes.nrPayment, extra: data);
+                },
+                child: Container(
+                  padding: const EdgeInsets.only(
+                      top: 12, bottom: 12, left: 32, right: 32),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(40),
+                    color: const Color(0xff1E1F2E),
+                  ),
+                  child: const Text(
+                    'Checkout',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
           )),
     );
   }

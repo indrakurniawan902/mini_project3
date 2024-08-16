@@ -1,23 +1,25 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:indie_commerce/navigation/app_router.dart';
 import 'package:indie_commerce/screen/cart/cubits/cart_cubit/cart_cubit.dart';
 import 'package:indie_commerce/screen/cart/cubits/price_total_cubit/price_total_cubit.dart';
+import 'package:indie_commerce/screen/favorite/add_item_cubit/add_item_cubit.dart';
+import 'package:indie_commerce/screen/favorite/favorite_cubit/favorite_cubit.dart';
 import 'package:indie_commerce/screen/home/cubit/product_cubit.dart';
 import 'package:indie_commerce/screen/detail%20product/detail_product_cubit/detail_product_cubit.dart';
+import 'package:indie_commerce/screen/payment/cubit/payment_cubit.dart';
 import 'package:indie_commerce/screen/profile/cubit/profile_cubit.dart';
 import 'package:indie_commerce/screen/login/cubit/login_cubit.dart';
+import 'package:indie_commerce/screen/register/cubit/register_cubit.dart';
 import 'package:indie_commerce/screen/splash/cubit/splash_cubit.dart';
 import 'package:indie_commerce/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-   await Firebase.initializeApp();
-  await Hive.initFlutter();
-  await Hive.openBox("favorites");
-  // await NotificationService().initLocalNotifications();
+  await Firebase.initializeApp();
+  await LocalNotificationService().initLocalNotifications();
+  await FcmService().initFCM();
   runApp(const MyApp());
 }
 
@@ -48,6 +50,18 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => PriceTotalCubit(),
+        ),
+        BlocProvider(
+          create: (context) => RegisterCubit(),
+        ),
+        BlocProvider(
+          create: (context) => FavoriteCubit(),
+        ),
+        BlocProvider(
+          create: (context) => AddItemCubit(),
+        ),
+        BlocProvider(
+          create: (context) => PaymentCubit(),
         ),
       ],
       child: MaterialApp.router(

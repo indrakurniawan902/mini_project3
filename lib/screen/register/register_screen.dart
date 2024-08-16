@@ -3,17 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:indie_commerce/navigation/app_routes.dart';
-import 'package:indie_commerce/screen/login/cubit/login_cubit.dart';
+import 'package:indie_commerce/screen/register/cubit/register_cubit.dart';
 import 'package:indie_commerce/screen/widget/custom_textfield.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -29,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+    _usernameController.clear();
     _emailController.clear();
     _passwordController.clear();
     super.dispose();
@@ -39,13 +41,14 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocListener<LoginCubit, LoginState>(
+      body: BlocListener<RegisterCubit, RegisterState>(
         listener: (context, state) {
-          if (state is LoginSuccess) {
+          if (state is RegisterSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text("Login success"), backgroundColor: Colors.green));
+                content: Text("Register success"),
+                backgroundColor: Colors.green));
             context.goNamed(AppRoutes.nrNavbar);
-          } else if (state is LoginError) {
+          } else if (state is RegisterEror) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(state.error), backgroundColor: Colors.red));
           }
@@ -77,6 +80,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(
                     height: 78,
                   ),
+                  const Text("Username",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 12),
+                  CustomTextfield(
+                    hintText: "Username",
+                    textEditingController: _usernameController,
+                  ),
+                  const SizedBox(height: 24),
                   const Text("Email",
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -115,7 +127,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: ElevatedButton(
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                            context.read<LoginCubit>().login(
+                            context.read<RegisterCubit>().registerUser(
+                                _usernameController.text,
                                 _emailController.text,
                                 _passwordController.text);
                           }
@@ -123,25 +136,25 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
                         ),
-                        child: BlocBuilder<LoginCubit, LoginState>(
+                        child: BlocBuilder<RegisterCubit, RegisterState>(
                           builder: (context, state) {
-                            if (state is LoginLoading) {
+                            if (state is RegisterLoading) {
                               return const CircularProgressIndicator(
                                 color: Colors.white,
                               );
                             } else {
                               return const Text(
-                                "Login",
+                                "Register",
                                 style: TextStyle(color: Colors.white),
                               );
                             }
                           },
                         )),
                   ),
-                  const SizedBox(height: 48),
+                     const SizedBox(height: 48),
                   const Center(
                       child: Text(
-                    "Does'nt Have an Account ?",
+                    "Have an Account ?",
                     style: TextStyle(fontSize: 14),
                   )),
                   SizedBox(
@@ -149,13 +162,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                           onPressed: () {
-                            context.pushNamed(AppRoutes.nrRegister);
+                            context.pop();
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
                           ),
                           child: const Text(
-                            "Register",
+                            "Login",
                             style: TextStyle(color: Colors.white),
                           ))),
                 ],

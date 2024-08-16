@@ -1,27 +1,24 @@
-import 'dart:convert';
+import 'package:json_annotation/json_annotation.dart';
 
-List<CartModel> cartModelFromJson(String str) =>
-    List<CartModel>.from(json.decode(str).map((x) => CartModel.fromJson(x)));
+part 'cart_model.g.dart';
 
-String cartModelToJson(List<CartModel> data) =>
-    json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
-
+@JsonSerializable()
 class CartModel {
-  int? productId;
-  int? quantity;
+  final int? id;
+  final String? title;
+  final double? price;
+  final String? image;
+  final int? quantity;
 
   CartModel({
-    this.productId,
-    this.quantity,
+    this.id,
+    this.title,
+    this.price,
+    this.image,
+    this.quantity
   });
 
-  factory CartModel.fromJson(Map<String, dynamic> json) => CartModel(
-        productId: json["productId"],
-        quantity: json["quantity"],
-      );
+  factory CartModel.fromJson(Map<String, dynamic> json) => _$CartModelFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-        "productId": productId,
-        "quantity": quantity,
-      };
+  Map<String, dynamic> toJson() => _$CartModelToJson(this);
 }

@@ -1,93 +1,129 @@
-// import 'package:dio/dio.dart';
-// import 'package:firebase_messaging/firebase_messaging.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:convert';
+import 'dart:math';
 
-// final dio = Dio();
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-// Future<void> handleBackgroundMessage(RemoteMessage message) async {}
+class LocalNotificationService {
+  static FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-// const _androidChannel = AndroidNotificationChannel(
-//     "high_importance_channel", "High Importance Notification",
-//     description: "Used for importance notification",
-//     importance: Importance.defaultImportance);
+  static ValueNotifier<String> payload = ValueNotifier("");
 
-// final _localNotification = FlutterLocalNotificationsPlugin();
+  void setPayload(String newPayload) {
+    payload.value = newPayload;
+  }
 
-// Future<void> handleMessage(RemoteMessage? message) async {
-//   print("Message : ${message!.data["sender"]}");
-//   navigatorKey.currentState?.pushNamed(ChatScreen.routeName,
-//       arguments: ChatParams(
-//         sender: UserModel.fromJson(message.data["sender"]),
-//         receiver: UserModel.fromJson(message.data["receiver"]),
-//       ));
-// }
+  static AndroidNotificationDetails androidNotificationDetails =
+      const AndroidNotificationDetails(
+    "Local Notif",
+    "Example Local Notif",
+    channelDescription: "Percobaan Local Notif",
+    importance: Importance.max,
+    priority: Priority.high,
+    icon: "@mipmap/ic_launcher",
+    playSound: true,
+    enableVibration: true,
+  );
 
-// // Future initLocalNotification() async {
-// //   const android = AndroidInitializationSettings("@drawable/launch_background");
-// //   const setting = InitializationSettings(android: android);
+  static DarwinNotificationDetails iosNotificationDetails =
+      const DarwinNotificationDetails(
+    threadIdentifier: "Local Notif",
+    presentAlert: true,
+    presentBadge: true,
+    presentSound: true,
+  );
 
-// //   await _localNotification.initialize(setting,
-// //       onDidReceiveNotificationResponse: (payload) {
-// //     final message = RemoteMessage.fromMap(jsonDecode(payload as String));
-// //     handleMessage(message);
-// //   });
-// // }
+  static NotificationDetails notificationDetails = NotificationDetails(
+    android: androidNotificationDetails,
+    iOS: iosNotificationDetails,
+  );
 
-// Future initPushnotification() async {
-//   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-//     alert: true,
-//     badge: true,
-//     sound: true,
-//   );
+  Future<void> initLocalNotifications() async {
+    const initializationSettingsAndroid =
+        AndroidInitializationSettings("@mipmap/ic_launcher");
 
-//   FirebaseMessaging.instance.getInitialMessage().then(handleMessage);
-//   FirebaseMessaging.onMessageOpenedApp.listen(handleMessage);
-//   FirebaseMessaging.onBackgroundMessage(handleBackgroundMessage);
-//   // FirebaseMessaging.onMessage.listen((event) {
-//   //   final notification = event.notification;
-//   //   if (notification == null) return;
-//   //   _localNotification.show(
-//   //       notification.hashCode,
-//   //       notification.title,
-//   //       notification.body,
-//   //       NotificationDetails(
-//   //           android: AndroidNotificationDetails(
-//   //         _androidChannel.id,
-//   //         _androidChannel.name,
-//   //         channelDescription: _androidChannel.description,
-//   //       )),
-//   //       payload: jsonEncode(event.toMap()));
-//   // });
-// }
+    const initializationIos = DarwinInitializationSettings();
 
-// class NotificationService extends ChangeNotifier {
-//   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+    const initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationIos,
+    );
 
-//   Future<void> initNotification() async {
-//     _firebaseMessaging.requestPermission();
-//     initPushnotification();
-//     // initLocalNotification();
-//   }
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (details) {
+        debugPrint("Notification Ditekan ${details.payload}");
+        setPayload(details.payload ?? "");
+      },
+    );
 
-//   Future<void> sendNotif(
-//       String message, UserModel sender, UserModel receiver, String id) async {
-//     Map<String, dynamic> headers = {
-//       'Authorization':
-//           'key=AAAAcbITNZo:APA91bFC31HTKBUweqUTGru8kyVRnytZw4OjqSkxXkO25fai6avWg9UqHf3ejBWgbOBUPIT2VBbuetLKtMrt_AbaxfLJ8naxH70F1DTCgv9JsKpYN7KgOqOmaNW8ZK4qijuPYHL4PwMo',
-//       'Content-Type': 'application/json',
-//     };
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
 
-//     try {
-//       Response response = await dio.post("https://fcm.googleapis.com/fcm/send",
-//           data: {
-//             "to": "/topics/$id",
-//             "notification": {"title": "${sender.name}", "body": message},
-//             "data": {"sender": sender.toJson(), "receiver": receiver.toJson()}
-//           },
-//           options: Options(headers: headers));
-//     } on DioException catch (e) {
-//       print(e.toString());
-//     }
-//   }
-// }
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+  }
+}
+
+class FcmService {
+  Future<void> initFCM() async {
+    final firebaseMessaging = FirebaseMessaging.instance;
+    await firebaseMessaging.requestPermission();
+    final fcmToken = await firebaseMessaging.getToken();
+    debugPrint("Token : $fcmToken");
+
+    firebaseMessaging.getInitialMessage().then((value) {
+      LocalNotificationService.payload.value = jsonEncode({
+        "title": value?.notification?.title,
+        "body": value?.notification?.body,
+        "data": value?.data,
+      });
+    });
+    FirebaseMessaging.onMessageOpenedApp.listen(
+      (value) {
+        LocalNotificationService.payload.value = jsonEncode({
+          "title": value.notification?.title,
+          "body": value.notification?.body,
+          "data": value.data,
+        });
+      },
+    );
+    FirebaseMessaging.onMessage.listen(
+      (message) async {
+        RemoteNotification? notification = message.notification;
+        AndroidNotification? android = message.notification?.android;
+
+        if (notification != null && android != null && !kIsWeb) {
+          await LocalNotificationService.flutterLocalNotificationsPlugin.show(
+              Random().nextInt(99),
+              notification.title,
+              notification.body,
+              payload: jsonEncode({
+                "title": notification.title,
+                "body": notification.body,
+                "data": message.data,
+              }),
+              LocalNotificationService.notificationDetails);
+        }
+      },
+    );
+  }
+
+  static Map<String, dynamic> tryDecode(data) {
+    try {
+      return jsonDecode(data);
+    } catch (e) {
+      return {};
+    }
+  }
+}
